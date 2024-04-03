@@ -10,17 +10,19 @@ using System.Text.Json;
 using System.Diagnostics;
 using System.Xml;
 using System.IO;
+using System.Text;
 
 
 
-public class IntegrationTest: IClassFixture<WebApplicationFactory<Program>>
+public class IntegrationTest : IClassFixture<WebApplicationFactory<Program>>
 {
-     public HttpClient _clientTest;
+    public HttpClient _clientTest;
 
-     public IntegrationTest(WebApplicationFactory<Program> factory)
+    public IntegrationTest(WebApplicationFactory<Program> factory)
     {
         //_factory = factory;
-        _clientTest = factory.WithWebHostBuilder(builder => {
+        _clientTest = factory.WithWebHostBuilder(builder =>
+        {
             builder.ConfigureServices(services =>
             {
                 var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<TrybeHotelContext>));
@@ -44,12 +46,12 @@ public class IntegrationTest: IClassFixture<WebApplicationFactory<Program>>
                     appContext.Database.EnsureCreated();
                     appContext.Database.EnsureDeleted();
                     appContext.Database.EnsureCreated();
-                    appContext.Cities.Add(new City {CityId = 1, Name = "Manaus"});
-                    appContext.Cities.Add(new City {CityId = 2, Name = "Palmas"});
+                    appContext.Cities.Add(new City { CityId = 1, Name = "Manaus" });
+                    appContext.Cities.Add(new City { CityId = 2, Name = "Palmas" });
                     appContext.SaveChanges();
-                    appContext.Hotels.Add(new Hotel {HotelId = 1, Name = "Trybe Hotel Manaus", Address = "Address 1", CityId = 1});
-                    appContext.Hotels.Add(new Hotel {HotelId = 2, Name = "Trybe Hotel Palmas", Address = "Address 2", CityId = 2});
-                    appContext.Hotels.Add(new Hotel {HotelId = 3, Name = "Trybe Hotel Ponta Negra", Address = "Addres 3", CityId = 1});
+                    appContext.Hotels.Add(new Hotel { HotelId = 1, Name = "Trybe Hotel Manaus", Address = "Address 1", CityId = 1 });
+                    appContext.Hotels.Add(new Hotel { HotelId = 2, Name = "Trybe Hotel Palmas", Address = "Address 2", CityId = 2 });
+                    appContext.Hotels.Add(new Hotel { HotelId = 3, Name = "Trybe Hotel Ponta Negra", Address = "Addres 3", CityId = 1 });
                     appContext.SaveChanges();
                     appContext.Rooms.Add(new Room { RoomId = 1, Name = "Room 1", Capacity = 2, Image = "Image 1", HotelId = 1 });
                     appContext.Rooms.Add(new Room { RoomId = 2, Name = "Room 2", Capacity = 3, Image = "Image 2", HotelId = 1 });
@@ -75,4 +77,57 @@ public class IntegrationTest: IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal(System.Net.HttpStatusCode.OK, response?.StatusCode);
     }
 
+    [Theory(DisplayName = "Teste get hotel")]
+    [InlineData("/hotel")]
+    public async Task TestGetHotel(string url)
+    {
+        var response = await _clientTest.GetAsync(url);
+        Assert.Equal(System.Net.HttpStatusCode.OK, response?.StatusCode);
+    }
+
+    [Theory(DisplayName = "Teste get room por ID")]
+    [InlineData("/room/1")]
+    public async Task TestGetRoom(string url)
+    {
+        var response = await _clientTest.GetAsync(url);
+        Assert.Equal(System.Net.HttpStatusCode.OK, response?.StatusCode);
+    }
+
+    [Theory(DisplayName = "Teste delete room")]
+    [InlineData("/room/1")]
+    public async Task TestDeleteRoom(string url)
+    {
+        var response = await _clientTest.DeleteAsync(url);
+        Assert.Equal(System.Net.HttpStatusCode.NoContent, response?.StatusCode);
+    }
+
+    [Theory(DisplayName = "Test add city")]
+    [InlineData("/city")]
+    public async Task TestAddCity(string url)
+    {
+        var city = new City { Name = "Rio de Janeiro" };
+        var content = new StringContent(JsonConvert.SerializeObject(city), Encoding.UTF8, "application/json");
+        var response = await _clientTest.PostAsync(url, content);
+        Assert.Equal(System.Net.HttpStatusCode.Created, response?.StatusCode);
+    }
+
+    [Theory(DisplayName = "Test add hotel")]
+    [InlineData("/hotel")]
+    public async Task TestAddHotel(string url)
+    {
+        var hotel = new Hotel { Name = "Trybe Hotel Rio de Janeiro", Address = "Address 4", CityId = 1 };
+        var content = new StringContent(JsonConvert.SerializeObject(hotel), Encoding.UTF8, "application/json");
+        var response = await _clientTest.PostAsync(url, content);
+        Assert.Equal(System.Net.HttpStatusCode.Created, response?.StatusCode);
+    }
+
+    [Theory(DisplayName = "Test add room")]
+    [InlineData("/room")]
+    public async Task TestAddRoom(string url)
+    {
+        var room = new Room { Name = "Room 10", Capacity = 2, Image = "Image", HotelId = 1 };
+        var content = new StringContent(JsonConvert.SerializeObject(room), Encoding.UTF8, "application/json");
+        var response = await _clientTest.PostAsync(url, content);
+        Assert.Equal(System.Net.HttpStatusCode.Created, response?.StatusCode);
+    }
 }

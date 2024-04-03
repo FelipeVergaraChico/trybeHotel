@@ -45,10 +45,10 @@ namespace TrybeHotel.Repository
                 }
                 _context.Hotels.Add(hotel);
                 _context.SaveChanges();
-                var nh = _context.Hotels.Last();
+                var nh = _context.Hotels.First(h => h.HotelId == hotel.HotelId);
                 return new HotelDto()
                 {
-                    hotelId = hotel.HotelId,
+                    hotelId = nh.HotelId,
                     name = hotel.Name,
                     address = hotel.Address,
                     cityId = hotel.CityId,
